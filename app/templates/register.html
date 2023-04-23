@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div id="register-form-wrap" class="form-wrap">
+    <h2>Register</h2>
+    <form id="register-form" class="form" method="post" action="/register_user">
+        <p>
+        <input type="text" id="username" name="username" placeholder="Username" required=""><i class="validation"><span></span><span></span></i>
+        </p>
+        <p>
+        <input type="email" id="email" name="email" placeholder="Email Address" required=""><i class="validation"><span></span><span></span></i>
+        </p>
+        <p>
+        <input type="password" id="password" name="password" placeholder="Passsword" required=""><img onclick="if (this.previousSibling.type == 'password'){this.previousSibling.type = 'text'}else{this.previousSibling.type = 'password'}" src="/static/images/eye-svgrepo-com.svg" alt="SVG Image" style="position: absolute;z-index: 99;right: 6px;top: 6px;width: 50px;"><i class="validation"><span></span><span></span></i>
+        </p>
+        <p>
+        <input type="password" id="confirmPassword" name="Confirm Password" placeholder="Confirm Password" required=""><img onclick="if (this.previousSibling.type == 'password'){this.previousSibling.type = 'text'}else{this.previousSibling.type = 'password'}" src="/static/images/eye-svgrepo-com.svg" alt="SVG Image" style="position: absolute;z-index: 99;right: 6px;top: 6px;width: 50px;"><i class="validation"><span></span><span></span></i>
+        </p>
+        <p>
+        <input type="submit" id="createAccount" value="Create Account">
+        </p>
+    </form>
+    <div id="create-account-wrap">
+        <p>Already a member? <a href="/login">Login</a></p>
+    </div>
+</div>
+
+{% endblock %}

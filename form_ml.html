@@ -1,0 +1,114 @@
+<!-- form.html -->
+{% if session_id in session %}
+<form style="width: 50%;margin-left:25%" class="mt-5">
+    <div class="mb-3">
+        <label for="tenureForm" class="form-label">Tenure (in months)</label>
+        <input type="text" class="form-control" id="tenureForm" placeholder="0" pattern="[0-9]+">
+    </div>
+
+    <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <label class="input-group-text" for="genderSelect">Gender</label>
+        </div>
+        <select class="custom-select" id="genderSelect">
+            <option selected>Choose...</option>
+            <option value="1">M</option>
+            <option value="2">F</option>
+        </select>
+    </div>
+
+    <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <label class="input-group-text" for="seniorCitizenSelect">Senior Citizen ? (over 65)</label>
+        </div>
+        <select class="custom-select" id="seniorCitizenSelect">
+            <option selected>Choose...</option>
+            <option value="1">Yes</option>
+            <option value="0">No</option>
+        </select>
+    </div>
+
+    <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <label class="input-group-text" for="partnerSelect">Partner ?</label>
+        </div>
+        <select class="custom-select" id="partnerSelect">
+            <option selected>Choose...</option>
+            <option value="1">Yes</option>
+            <option value="0">No</option>
+        </select>
+    </div>
+
+    <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <label class="input-group-text" for="dependentsSelect">Dependents ?</label>
+        </div>
+        <select class="custom-select" id="dependentsSelect">
+            <option selected>Choose...</option>
+            <option value="1">Yes</option>
+            <option value="0">No</option>
+        </select>
+    </div>
+
+    <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <label class="input-group-text" for="additionalServicesSelect">Additional Services ?</label>
+        </div>
+        <select class="custom-select" id="additionalServicesSelect">
+            <option selected>Choose...</option>
+            <option value="1">Yes</option>
+            <option value="0">No</option>
+        </select>
+    </div>
+
+    <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <label class="input-group-text" for="contractTypeSelect">Contract Type</label>
+        </div>
+        <select class="custom-select" id="contractTypeSelect">
+            <option selected>Choose...</option>
+            <option value="1">Month to month</option>
+            <option value="2">One Year</option>
+            <option value="3">Two Years</option>
+        </select>
+    </div>
+
+    <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <label class="input-group-text" for="paymentMethodSelect">Payment Method</label>
+        </div>
+        <select class="custom-select" id="paymentMethodSelect">
+            <option selected>Choose...</option>
+            <option value="1">Electronic Check</option>
+            <option value="2">Mailed Check</option>
+            <option value="3">Bank Transfer (automatic)</option>
+            <option value="4">Credit Card (automatic)</option>
+        </select>
+    </div>
+
+    <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <label class="input-group-text" for="paperlessBillingSelect">Paperless Billing ?</label>
+        </div>
+        <select class="custom-select" id="paperlessBillingSelect">
+            <option selected>Choose...</option>
+            <option value="1">Yes</option>
+            <option value="0">No</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label for="monthlyChargesForm" class="form-label">Monthly Charges</label>
+        <input type="text" class="form-control" id="monthlyChargesForm" placeholder="0" pattern="[0-9]+">
+    </div>
+
+    <div class="mb-3">
+        <label for="monthlyChargesForm" class="form-label">Total Charges</label>
+        <input type="text" class="form-control" id="totalChargesForm" placeholder="0" pattern="[0-9]+">
+    </div>
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+{%else%}
+    <p style="text-align: center;font-size: 6em" class="my-5">Please login before using the predictor !</p>
+{%endif%}

@@ -4,12 +4,13 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
 from databases import Database
+from argon2 import PasswordHasher, exceptions
 
 app = FastAPI()
 database = Database("sqlite:///./test.db")
 session = {}
 session_id = None
-
+ph = PasswordHasher()
 
 @app.on_event("startup")
 async def create_tables():
@@ -44,7 +45,7 @@ async def login(request: Request):
         return RedirectResponse(url="/", status_code=303)
 
 
-@app.get("/logout", response_class=HTMLResponse)
+@app.get("/logout")
 async def logout(request: Request):
     global session
     global session_id
@@ -72,11 +73,11 @@ async def register_user(username: str = Form(...), email: str = Form(...), passw
     values = {
         "username": username,
         "email": email,
-        "password": password
+        "password": ph.hash(password)
     }
     user_id = await database.execute(query=query, values=values)
     response = RedirectResponse(url="/", status_code=303)
-    response.set_cookie("user_id", user_id)
+    #response.set_cookie("user_id", user_id)
     return response
 
 
@@ -86,16 +87,19 @@ async def login_user(email: str = Form(...), password: str = Form(...)):
     query = """
             SELECT id, username, password, email
             FROM users
-            WHERE email = :email AND password = :password
+            WHERE email = :email
         """
     values = {
-        "email": email,
-        "password": password
+        "email": email
     }
     row = await database.fetch_one(query=query, values=values)
     if row is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-
+    else:
+        try:
+            ph.verify(row[2], password)
+        except exceptions.VerifyMismatchError:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     session_id = str(uuid.uuid4())
     session[session_id] = {'username': row[1], 'email': row[3], 'logged_in': True}
 

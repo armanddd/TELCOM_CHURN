@@ -1,8 +1,10 @@
 <!-- form.html -->
 {% if session_id in session %}
 <form style="width: 50%;margin-left:25%" class="mt-5">
+    <h1 class="display-4 text-center mb-4">Customer Churn Prediction</h1>
     <div class="mb-3">
-        <label for="tenureForm" class="form-label">Tenure (in months)</label>
+        <label for="tenureForm" class="form-label">Tenure (in months) </label>
+        <img src="/static/images/info-icon-svgrepo-com.svg" alt="Description of SVG image" width="20" id="tenureInformation" height="20">
         <input type="text" class="form-control" id="tenureForm" placeholder="0" pattern="[0-9]+">
     </div>
 
@@ -30,7 +32,9 @@
 
     <div class="input-group mb-3">
         <div class="input-group-prepend">
-            <label class="input-group-text" for="partnerSelect">Partner ?</label>
+            <label class="input-group-text" for="partnerSelect">Partner ?
+                <img style="margin-left: 6px" src="/static/images/info-icon-svgrepo-com.svg" alt="Description of SVG image" width="20" id="partnerInformation" height="20">
+            </label>
         </div>
         <select class="custom-select" id="partnerSelect">
             <option selected>Choose...</option>
@@ -41,7 +45,9 @@
 
     <div class="input-group mb-3">
         <div class="input-group-prepend">
-            <label class="input-group-text" for="dependentsSelect">Dependents ?</label>
+            <label class="input-group-text" for="dependentsSelect">Dependents ?
+                <img style="margin-left: 6px" src="/static/images/info-icon-svgrepo-com.svg" alt="Description of SVG image" width="20" id="dependantsInformation" height="20">
+            </label>
         </div>
         <select class="custom-select" id="dependentsSelect">
             <option selected>Choose...</option>
@@ -52,7 +58,9 @@
 
     <div class="input-group mb-3">
         <div class="input-group-prepend">
-            <label class="input-group-text" for="additionalServicesSelect">Additional Services ?</label>
+            <label class="input-group-text" for="additionalServicesSelect">Additional Services ?
+                <img style="margin-left: 6px" src="/static/images/info-icon-svgrepo-com.svg" alt="Description of SVG image" width="20" id="servicesInformation" height="20">
+            </label>
         </div>
         <select class="custom-select" id="additionalServicesSelect">
             <option selected>Choose...</option>

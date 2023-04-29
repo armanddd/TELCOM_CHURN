@@ -12,6 +12,7 @@ session = {}
 session_id = None
 ph = PasswordHasher()
 
+
 @app.on_event("startup")
 async def create_tables():
     await database.execute("""
@@ -77,7 +78,7 @@ async def register_user(username: str = Form(...), email: str = Form(...), passw
     }
     user_id = await database.execute(query=query, values=values)
     response = RedirectResponse(url="/", status_code=303)
-    #response.set_cookie("user_id", user_id)
+    # response.set_cookie("user_id", user_id)
     return response
 
 
@@ -102,5 +103,23 @@ async def login_user(email: str = Form(...), password: str = Form(...)):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     session_id = str(uuid.uuid4())
     session[session_id] = {'username': row[1], 'email': row[3], 'logged_in': True}
+
+    return RedirectResponse(url="/", status_code=303)
+
+
+@app.post('/make_prediction')
+async def make_prediction(tenureForm: str = Form(...), genderSelect: str = Form(...), seniorCitizenSelect: str = Form(...),
+                          partnerSelect: str = Form(...), dependentsSelect: str = Form(...), additionalServicesSelect: str = Form(...),
+                          contractTypeSelect: str = Form(...), paymentMethodSelect: str = Form(...), paperlessBillingSelect: str = Form(...),
+                          monthlyChargesForm: str = Form(...), totalChargesForm: str = Form(...)):
+    import joblib
+    global session_id
+
+    services_pca = joblib.load("static/models/services_pca.joblib")
+    voting_clf = joblib.load("static/models/pca_voting_classifier.joblib")
+
+
+    if session_id is None:
+        return RedirectResponse(url="/", status_code=303)
 
     return RedirectResponse(url="/", status_code=303)

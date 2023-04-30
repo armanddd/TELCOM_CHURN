@@ -46,7 +46,8 @@ async def create_tables():
                 PaperlessBilling TEXT NOT NULL,
                 PaymentMethod TEXT NOT NULL,
                 MonthlyCharges TEXT NOT NULL,
-                TotalCharges TEXT NOT NULL
+                TotalCharges TEXT NOT NULL,
+                predictions TEXT NOT NULL
             )
         """)
 
@@ -231,8 +232,8 @@ async def make_prediction(tenureForm: float = Form(...), genderSelect: str = For
 
     ############################# Database Part ###########################
     query = """
-                INSERT INTO predictions ("requested_user", "requested_time", "gender", "SeniorCitizen", "Partner", "Dependents", "tenure", "PhoneService", "MultipleLines", "InternetService", "OnlineSecurity", "OnlineBackup", "DeviceProtection", "TechSupport", "StreamingTV", "StreamingMovies", "Contract", "PaperlessBilling", "PaymentMethod", "MonthlyCharges", "TotalCharges") 
-                VALUES (:username, DATE('now'), :gender, :senior_citizen, :partner, :dependents, :tenure, :phone_service, :multiple_lines, :internet_service, :online_security, :online_backup, :device_protection, :tech_support, :streaming_tv, :streaming_movies, :contract, :paperless_billing, :payment_method, :monthly_charges, :total_charges)
+                INSERT INTO predictions ("requested_user", "requested_time", "gender", "SeniorCitizen", "Partner", "Dependents", "tenure", "PhoneService", "MultipleLines", "InternetService", "OnlineSecurity", "OnlineBackup", "DeviceProtection", "TechSupport", "StreamingTV", "StreamingMovies", "Contract", "PaperlessBilling", "PaymentMethod", "MonthlyCharges", "TotalCharges", "predictions") 
+                VALUES (:username, DATE('now'), :gender, :senior_citizen, :partner, :dependents, :tenure, :phone_service, :multiple_lines, :internet_service, :online_security, :online_backup, :device_protection, :tech_support, :streaming_tv, :streaming_movies, :contract, :paperless_billing, :payment_method, :monthly_charges, :total_charges, :prediction)
             """
     values = {
         "username": session[session_id]["username"],
@@ -254,9 +255,10 @@ async def make_prediction(tenureForm: float = Form(...), genderSelect: str = For
         "paperless_billing": paperlessBillingSelect,
         "payment_method": paymentMethodSelect,
         "monthly_charges": monthlyChargesForm,
-        "total_charges": totalChargesForm
+        "total_charges": totalChargesForm,
+        "prediction": str(voting_clf.predict(voting_df)[0])
     }
     await database.execute(query, values)
-
     ############################# Database Part ###########################
+
     return RedirectResponse(url="/?prediction=" + str(voting_clf.predict(voting_df)[0]), status_code=303)

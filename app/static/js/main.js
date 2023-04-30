@@ -6,9 +6,29 @@ document.addEventListener("DOMContentLoaded", function(event) {
         content: "Does your customer also have a partner that has a contract with you",
     });
   tippy('#dependantsInformation', {
-        content: "Are there individuals who rely on the primary account holder for their telecom services.",
+        content: "Are there individuals who rely on the primary account holder for their services.",
     });
-  tippy('#servicesInformation', {
+ /*tippy('#servicesInformation', {
         content: "Is there any another additional monthly paid service that the customer has subscribed to",
-    });
+    });*/
+
+    // Get the query string parameters from the current URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has("prediction")) {
+      if (urlParams.get("prediction") == 0)
+        // The "my_variable" parameter is set, do something...
+        Swal.fire({
+        title: 'Prediction',
+        text: 'Your client will not churn',
+        icon: 'info',
+        confirmButtonText: 'Ok'
+        }).then(() => {window.location = "/"})
+      else
+        Swal.fire({
+        title: 'Prediction',
+        text: 'Your client will churn',
+        icon: 'info',
+        confirmButtonText: 'Ok'
+        }).then(() => {window.location = "/"})
+    }
 });

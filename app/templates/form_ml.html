@@ -1,7 +1,7 @@
 <!-- form.html -->
 {% if session_id in session %}
 <form style="width: 50%;margin-left:25%" class="mt-5" method="post" action="/make_prediction">
-    <h1 class="display-4 text-center mb-4">Customer Churn Prediction</h1>
+    <h1 class="display-4 text-center mb-4">Customer Telecom Churn Prediction</h1>
     <div class="mb-3">
         <label for="tenureForm" class="form-label">Tenure (in months) </label>
         <img src="/static/images/info-icon-svgrepo-com.svg" alt="Description of SVG image" width="20" id="tenureInformation" height="20">
@@ -13,8 +13,8 @@
             <label class="input-group-text" for="genderSelect">Gender</label>
         </div>
         <select class="custom-select" id="genderSelect" name="genderSelect">
-            <option value="M" selected>M</option>
-            <option value="F">F</option>
+            <option value="Male" selected>M</option>
+            <option value="Female">F</option>
         </select>
     </div>
 
@@ -35,8 +35,8 @@
             </label>
         </div>
         <select class="custom-select" id="partnerSelect" name="partnerSelect">
-            <option value="1">Yes</option>
-            <option value="0" selected>No</option>
+            <option value="Yes">Yes</option>
+            <option value="No" selected>No</option>
         </select>
     </div>
 
@@ -47,23 +47,106 @@
             </label>
         </div>
         <select class="custom-select" id="dependentsSelect" name="dependentsSelect">
-            <option value="1">Yes</option>
-            <option value="0" selected>No</option>
+            <option value="Yes">Yes</option>
+            <option value="No" selected>No</option>
         </select>
     </div>
 
     <div class="input-group mb-3">
         <div class="input-group-prepend">
-            <label class="input-group-text" for="additionalServicesSelect">Additional Services ?
-                <img style="margin-left: 6px" src="/static/images/info-icon-svgrepo-com.svg" alt="Description of SVG image" width="20" id="servicesInformation" height="20">
-            </label>
+            <label class="input-group-text" for="phoneServiceSelect">Phone Service ?</label>
         </div>
-        <select class="custom-select" id="additionalServicesSelect" name="additionalServicesSelect">
-            <option value="4">4</option>
-            <option value="3">3</option>
-            <option value="2">2</option>
-            <option value="1">1</option>
-            <option value="0" selected>0</option>
+        <select class="custom-select" id="phoneServiceSelect" name="phoneServiceSelect">
+            <option value="Yes">Yes</option>
+            <option value="No" selected>No</option>
+        </select>
+    </div>
+
+    <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <label class="input-group-text" for="multipleLinesSelect">Multiple Lines ?</label>
+        </div>
+        <select class="custom-select" id="multipleLinesSelect" name="multipleLinesSelect">
+            <option value="Yes">Yes</option>
+            <option value="No phone service" selected>No phone service</option>
+            <option value="No" selected>No</option>
+        </select>
+    </div>
+
+    <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <label class="input-group-text" for="internetServiceSelect">Internet Service ?</label>
+        </div>
+        <select class="custom-select" id="internetServiceSelect" name="internetServiceSelect">
+            <option value="DSL">DSL</option>
+            <option value="Fiber optic">Fiber optic</option>
+            <option value="No" selected>No</option>
+        </select>
+    </div>
+
+     <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <label class="input-group-text" for="onlineSecuritySelect">Online Security ?</label>
+        </div>
+        <select class="custom-select" id="onlineSecuritySelect" name="onlineSecuritySelect">
+            <option value="Yes">Yes</option>
+            <option value="No internet service">No internet service</option>
+            <option value="No" selected>No</option>
+        </select>
+    </div>
+
+     <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <label class="input-group-text" for="onlineBackupSelect">Online Backup ?</label>
+        </div>
+        <select class="custom-select" id="onlineBackupSelect" name="onlineBackupSelect">
+            <option value="Yes">Yes</option>
+            <option value="No internet service">No internet service</option>
+            <option value="No" selected>No</option>
+        </select>
+    </div>
+
+     <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <label class="input-group-text" for="deviceProtectionSelect">Device Protection ?</label>
+        </div>
+        <select class="custom-select" id="deviceProtectionSelect" name="deviceProtectionSelect">
+            <option value="Yes">Yes</option>
+            <option value="No internet service">No internet service</option>
+            <option value="No" selected>No</option>
+        </select>
+    </div>
+
+     <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <label class="input-group-text" for="techSupportSelect">Tech Support ?</label>
+        </div>
+        <select class="custom-select" id="techSupportSelect" name="techSupportSelect">
+            <option value="Yes">Yes</option>
+            <option value="No internet service">No internet service</option>
+            <option value="No" selected>No</option>
+        </select>
+    </div>
+
+     <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <label class="input-group-text" for="streamingTVSelect">Streaming TV ?</label>
+        </div>
+        <select class="custom-select" id="streamingTVSelect" name="streamingTVSelect">
+            <option value="Yes">Yes</option>
+            <option value="No internet service">No internet service</option>
+            <option value="No" selected>No</option>
+        </select>
+    </div>
+
+     <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <label class="input-group-text" for="streamingMoviesSelect">Streaming Movies ?</label>
+        </div>
+        <select class="custom-select" id="streamingMoviesSelect" name="streamingMoviesSelect">
+            <option value="Yes">Yes</option>
+            <option value="No internet service">No internet service</option>
+            <option value="No" selected>No</option>
         </select>
     </div>
 
@@ -72,9 +155,9 @@
             <label class="input-group-text" for="contractTypeSelect">Contract Type</label>
         </div>
         <select class="custom-select" id="contractTypeSelect" name="contractTypeSelect">
-            <option value="1" selected>Month to month</option>
-            <option value="2">One Year</option>
-            <option value="3">Two Years</option>
+            <option value="Month-to-month" selected>Month to month</option>
+            <option value="One year">One Year</option>
+            <option value="Two year">Two Years</option>
         </select>
     </div>
 
@@ -83,10 +166,10 @@
             <label class="input-group-text" for="paymentMethodSelect">Payment Method</label>
         </div>
         <select class="custom-select" id="paymentMethodSelect" name="paymentMethodSelect">
-            <option value="1">Electronic Check</option>
-            <option value="2">Mailed Check</option>
-            <option value="3">Bank Transfer (automatic)</option>
-            <option value="4" selected>Credit Card (automatic)</option>
+            <option value="Electronic check">Electronic Check</option>
+            <option value="Mailed check">Mailed Check</option>
+            <option value="Bank transfer (automatic)">Bank Transfer (automatic)</option>
+            <option value="Credit card (automatic)" selected>Credit Card (automatic)</option>
         </select>
     </div>
 
@@ -95,19 +178,19 @@
             <label class="input-group-text" for="paperlessBillingSelect">Paperless Billing ?</label>
         </div>
         <select class="custom-select" id="paperlessBillingSelect" name="paperlessBillingSelect">
-            <option value="1">Yes</option>
-            <option value="0" selected>No</option>
+            <option value="Yes">Yes</option>
+            <option value="No" selected>No</option>
         </select>
     </div>
 
     <div class="mb-3">
         <label for="monthlyChargesForm" class="form-label">Monthly Charges</label>
-        <input type="text" class="form-control" id="monthlyChargesForm" name="monthlyChargesForm" placeholder="0" value="0" pattern="[0-9]+">
+        <input type="text" class="form-control" id="monthlyChargesForm" name="monthlyChargesForm" placeholder="0" value="0" pattern="[-,-.0-9]+">
     </div>
 
     <div class="mb-3">
-        <label for="monthlyChargesForm" class="form-label">Total Charges</label>
-        <input type="text" class="form-control" id="totalChargesForm" name="totalChargesForm" placeholder="0" value="0" pattern="[0-9]+">
+        <label for="totalChargesForm" class="form-label">Total Charges</label>
+        <input type="text" class="form-control" id="totalChargesForm" name="totalChargesForm" placeholder="0" value="0" pattern="[-,-.0-9]+">
     </div>
 
     <button type="submit" class="btn btn-primary">Submit</button>

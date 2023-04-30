@@ -1,5 +1,5 @@
 import uuid
-from fastapi import FastAPI, Request, HTTPException, status, Form, Depends
+from fastapi import FastAPI, Request, HTTPException, status, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -108,18 +108,102 @@ async def login_user(email: str = Form(...), password: str = Form(...)):
 
 
 @app.post('/make_prediction')
-async def make_prediction(tenureForm: str = Form(...), genderSelect: str = Form(...), seniorCitizenSelect: str = Form(...),
-                          partnerSelect: str = Form(...), dependentsSelect: str = Form(...), additionalServicesSelect: str = Form(...),
-                          contractTypeSelect: str = Form(...), paymentMethodSelect: str = Form(...), paperlessBillingSelect: str = Form(...),
-                          monthlyChargesForm: str = Form(...), totalChargesForm: str = Form(...)):
+async def make_prediction(tenureForm: float = Form(...), genderSelect: str = Form(...),
+                          seniorCitizenSelect: float = Form(...),
+                          partnerSelect: str = Form(...), dependentsSelect: str = Form(...),
+                          phoneServiceSelect: str = Form(...), multipleLinesSelect: str = Form(...),
+                          internetServiceSelect: str = Form(...), onlineSecuritySelect: str = Form(...),
+                          onlineBackupSelect: str = Form(...), deviceProtectionSelect: str = Form(...),
+                          techSupportSelect: str = Form(...), streamingTVSelect: str = Form(...),
+                          streamingMoviesSelect: str = Form(...),
+                          contractTypeSelect: str = Form(...), paymentMethodSelect: str = Form(...),
+                          paperlessBillingSelect: str = Form(...),
+                          monthlyChargesForm: float = Form(...), totalChargesForm: float = Form(...)):
     import joblib
+    import pandas as pd
     global session_id
-
-    services_pca = joblib.load("static/models/services_pca.joblib")
-    voting_clf = joblib.load("static/models/pca_voting_classifier.joblib")
-
 
     if session_id is None:
         return RedirectResponse(url="/", status_code=303)
 
-    return RedirectResponse(url="/", status_code=303)
+    services_pca = joblib.load("static/models/services_pca.joblib")
+    voting_clf = joblib.load("static/models/pca_voting_classifier.joblib")
+    scaler = joblib.load("static/models/scaler.joblib")
+
+    ############################# PCA Part #############################
+    pca_data = {"PhoneService": phoneServiceSelect, "MultipleLines": multipleLinesSelect,
+                "InternetService": internetServiceSelect, "OnlineSecurity": onlineSecuritySelect,
+                "OnlineBackup": onlineBackupSelect, "DeviceProtection": deviceProtectionSelect,
+                "TechSupport": techSupportSelect, "StreamingTV": streamingTVSelect,
+                "StreamingMovies": streamingMoviesSelect}
+
+    pca_df = pd.DataFrame(data=pca_data, columns=['PhoneService', 'MultipleLines', 'InternetService', 'OnlineSecurity',
+                                                  'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV',
+                                                  'StreamingMovies'], index=["1"])
+    pca_df = pd.get_dummies(pca_df)
+
+    pca_example = pd.DataFrame(columns=['PhoneService_No', 'PhoneService_Yes', 'MultipleLines_No',
+                                        'MultipleLines_No phone service', 'MultipleLines_Yes',
+                                        'InternetService_DSL', 'InternetService_Fiber optic',
+                                        'InternetService_No', 'OnlineSecurity_No',
+                                        'OnlineSecurity_No internet service', 'OnlineSecurity_Yes',
+                                        'OnlineBackup_No', 'OnlineBackup_No internet service',
+                                        'OnlineBackup_Yes', 'DeviceProtection_No',
+                                        'DeviceProtection_No internet service', 'DeviceProtection_Yes',
+                                        'TechSupport_No', 'TechSupport_No internet service', 'TechSupport_Yes',
+                                        'StreamingTV_No', 'StreamingTV_No internet service', 'StreamingTV_Yes',
+                                        'StreamingMovies_No', 'StreamingMovies_No internet service',
+                                        'StreamingMovies_Yes'])
+
+    # set a row with only values of 0
+    pca_example.loc[1] = 0
+
+    # merge the two dfs so we have a replica of the training df with all the possible values
+    pca_df = pd.merge(pca_example, pca_df, how="right").fillna(0)
+
+    # store value of the services pca for later concat
+    X_pca = pd.DataFrame(services_pca.transform(pca_df), columns=['PC1'])
+    ############################# PCA Part #############################
+
+    ############################# Voting Part #############################
+    voting_data = {'gender': genderSelect, 'SeniorCitizen': seniorCitizenSelect, 'Partner': partnerSelect,
+                   'Dependents': dependentsSelect, 'tenure': tenureForm,
+                   'Contract': contractTypeSelect, 'PaperlessBilling': paperlessBillingSelect,
+                   'PaymentMethod': paymentMethodSelect, 'MonthlyCharges': monthlyChargesForm,
+                   'TotalCharges': totalChargesForm}
+
+    voting_df = pd.DataFrame(data=voting_data, columns=['gender', 'SeniorCitizen', 'Partner', 'Dependents', 'tenure',
+                                                        'Contract', 'PaperlessBilling', 'PaymentMethod',
+                                                        'MonthlyCharges',
+                                                        'TotalCharges'], index=["1"])
+
+    # change cast types so get dummies doesnt create additional columns
+    voting_df = voting_df.astype(
+        {'SeniorCitizen': 'float', 'tenure': 'float', 'MonthlyCharges': 'float', 'TotalCharges': 'float'})
+    voting_df = pd.get_dummies(voting_df)
+
+    voting_example = pd.DataFrame(columns=['SeniorCitizen', 'tenure', 'MonthlyCharges', 'TotalCharges',
+                                           'gender_Female', 'gender_Male', 'Partner_No', 'Partner_Yes',
+                                           'Dependents_No', 'Dependents_Yes', 'Contract_Month-to-month',
+                                           'Contract_One year', 'Contract_Two year', 'PaperlessBilling_No',
+                                           'PaperlessBilling_Yes', 'PaymentMethod_Bank transfer (automatic)',
+                                           'PaymentMethod_Credit card (automatic)',
+                                           'PaymentMethod_Electronic check', 'PaymentMethod_Mailed check'])
+    # change cast types so get dummies doesnt create additional columns
+    voting_example = voting_example.astype(
+        {'SeniorCitizen': 'int', 'tenure': 'int', 'MonthlyCharges': 'float', 'TotalCharges': 'float'})
+    # set a row with only values of 0
+    voting_example.loc[1] = 0
+
+    # print("vdf", voting_df, "\n\n\nvex",voting_example)
+    # merge the two dfs so we have a replica of the training df with all the possible values
+    voting_df = pd.merge(voting_example, voting_df, how="right").fillna(0)
+
+    print(voting_df)
+
+    voting_df = pd.DataFrame(scaler.transform(voting_df), columns=voting_df.columns.values)
+    voting_df["PC1"] = X_pca[["PC1"]]
+    print(voting_df)
+    print(voting_clf.predict(voting_df))
+    ############################# Voting Part #############################
+    return RedirectResponse(url="/?prediction=" + str(voting_clf.predict(voting_df)[0]), status_code=303)

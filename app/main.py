@@ -23,6 +23,32 @@ async def create_tables():
             password TEXT NOT NULL
         )
     """)
+    await database.execute("""
+            CREATE TABLE IF NOT EXISTS predictions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                requested_user TEXT NOT NULL,
+                requested_time DATETIME NOT NULL,
+                gender TEXT NOT NULL,
+                SeniorCitizen TEXT NOT NULL,
+                Partner TEXT NOT NULL,
+                Dependents TEXT NOT NULL,
+                tenure TEXT NOT NULL,
+                PhoneService TEXT NOT NULL,
+                MultipleLines TEXT NOT NULL,
+                InternetService TEXT NOT NULL,
+                OnlineSecurity TEXT NOT NULL,
+                OnlineBackup TEXT NOT NULL,
+                DeviceProtection TEXT NOT NULL,
+                TechSupport TEXT NOT NULL,
+                StreamingTV TEXT NOT NULL,
+                StreamingMovies TEXT NOT NULL,
+                Contract TEXT NOT NULL,
+                PaperlessBilling TEXT NOT NULL,
+                PaymentMethod TEXT NOT NULL,
+                MonthlyCharges TEXT NOT NULL,
+                TotalCharges TEXT NOT NULL
+            )
+        """)
 
 
 # Mount static files directory for CSS, JS, and images
@@ -195,15 +221,42 @@ async def make_prediction(tenureForm: float = Form(...), genderSelect: str = For
     # set a row with only values of 0
     voting_example.loc[1] = 0
 
-    # print("vdf", voting_df, "\n\n\nvex",voting_example)
     # merge the two dfs so we have a replica of the training df with all the possible values
     voting_df = pd.merge(voting_example, voting_df, how="right").fillna(0)
 
-    print(voting_df)
-
     voting_df = pd.DataFrame(scaler.transform(voting_df), columns=voting_df.columns.values)
     voting_df["PC1"] = X_pca[["PC1"]]
-    print(voting_df)
-    print(voting_clf.predict(voting_df))
+
     ############################# Voting Part #############################
+
+    ############################# Database Part ###########################
+    query = """
+                INSERT INTO predictions ("requested_user", "requested_time", "gender", "SeniorCitizen", "Partner", "Dependents", "tenure", "PhoneService", "MultipleLines", "InternetService", "OnlineSecurity", "OnlineBackup", "DeviceProtection", "TechSupport", "StreamingTV", "StreamingMovies", "Contract", "PaperlessBilling", "PaymentMethod", "MonthlyCharges", "TotalCharges") 
+                VALUES (:username, DATE('now'), :gender, :senior_citizen, :partner, :dependents, :tenure, :phone_service, :multiple_lines, :internet_service, :online_security, :online_backup, :device_protection, :tech_support, :streaming_tv, :streaming_movies, :contract, :paperless_billing, :payment_method, :monthly_charges, :total_charges)
+            """
+    values = {
+        "username": session[session_id]["username"],
+        "gender": genderSelect,
+        "senior_citizen": seniorCitizenSelect,
+        "partner": partnerSelect,
+        "dependents": dependentsSelect,
+        "tenure": tenureForm,
+        "phone_service": phoneServiceSelect,
+        "multiple_lines": multipleLinesSelect,
+        "internet_service": internetServiceSelect,
+        "online_security": onlineSecuritySelect,
+        "online_backup": onlineBackupSelect,
+        "device_protection": deviceProtectionSelect,
+        "tech_support": techSupportSelect,
+        "streaming_tv": streamingTVSelect,
+        "streaming_movies": streamingMoviesSelect,
+        "contract": contractTypeSelect,
+        "paperless_billing": paperlessBillingSelect,
+        "payment_method": paymentMethodSelect,
+        "monthly_charges": monthlyChargesForm,
+        "total_charges": totalChargesForm
+    }
+    await database.execute(query, values)
+
+    ############################# Database Part ###########################
     return RedirectResponse(url="/?prediction=" + str(voting_clf.predict(voting_df)[0]), status_code=303)

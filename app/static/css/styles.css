@@ -11,7 +11,7 @@ a,
 a:link,
 a:visited,
 a:active {
-  color: #3f3f3f;
+  color: #c5c5c5;;
   -webkit-transition: all 0.2s ease;
   transition: all 0.2s ease;
 }

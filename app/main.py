@@ -5,6 +5,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
 from databases import Database
 from argon2 import PasswordHasher, exceptions
+import secrets
 
 app = FastAPI()
 database = Database("sqlite:///./test.db")
@@ -20,7 +21,9 @@ async def create_tables():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL,
             email TEXT NOT NULL,
-            password TEXT NOT NULL
+            password TEXT NOT NULL,
+            api_key TEXT NOT NULL,
+            first_login INTEGER DEFAULT 1
         )
     """)
     await database.execute("""
@@ -61,7 +64,6 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
 async def read_home(request: Request):
-    print(request, session)
     return templates.TemplateResponse("base.html", {"request": request, "session": session, "session_id": session_id})
 
 
@@ -95,25 +97,25 @@ async def register(request: Request):
 @app.post('/register_user', status_code=201)
 async def register_user(username: str = Form(...), email: str = Form(...), password: str = Form(...)):
     query = """
-            INSERT INTO users (username, password, email)
-            VALUES (:username, :password, :email)
+            INSERT INTO users (username, password, email, api_key)
+            VALUES (:username, :password, :email, :api_key)
         """
     values = {
         "username": username,
         "email": email,
-        "password": ph.hash(password)
+        "password": ph.hash(password),
+        "api_key": secrets.token_hex(16)
     }
-    user_id = await database.execute(query=query, values=values)
+    await database.execute(query=query, values=values)
     response = RedirectResponse(url="/", status_code=303)
-    # response.set_cookie("user_id", user_id)
-    return response
+    return RedirectResponse(url="/", status_code=303)
 
 
 @app.post('/login_user')
 async def login_user(email: str = Form(...), password: str = Form(...)):
     global session, session_id
     query = """
-            SELECT id, username, password, email
+            SELECT id, username, password, email, first_login, api_key
             FROM users
             WHERE email = :email
         """
@@ -129,10 +131,17 @@ async def login_user(email: str = Form(...), password: str = Form(...)):
         except exceptions.VerifyMismatchError:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     session_id = str(uuid.uuid4())
-    session[session_id] = {'username': row[1], 'email': row[3], 'logged_in': True}
+    session[session_id] = {'username': row[1], 'email': row[3], 'logged_in': True, 'first_login': row[4], 'api_key': row[5]}
 
     return RedirectResponse(url="/", status_code=303)
 
+@app.post('/remove_first_login')
+async def remove_first_login():
+    global session_id
+    query = "UPDATE users SET first_login = 0 WHERE username = :username"
+    values = {'username': session[session_id]['username']}
+    await database.execute(query, values)
+    session[session_id]['first_login'] = 0
 
 @app.post('/make_prediction')
 async def make_prediction(tenureForm: float = Form(...), genderSelect: str = Form(...),
@@ -150,8 +159,11 @@ async def make_prediction(tenureForm: float = Form(...), genderSelect: str = For
     import pandas as pd
     global session_id
 
-    if session_id is None:
-        return RedirectResponse(url="/", status_code=303)
+    #if session_id is None:
+    #    return RedirectResponse(url="/", status_code=401)
+
+    #if pyjwt.decode(encoded_jwt, "secret", algorithms=["HS256"])["session_id"] != session_id:
+    #    return RedirectResponse(url="/", status_code=401)
 
     services_pca = joblib.load("static/models/services_pca.joblib")
     voting_clf = joblib.load("static/models/pca_voting_classifier.joblib")

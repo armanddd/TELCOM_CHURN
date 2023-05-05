@@ -23,6 +23,26 @@
         <script src="https://unpkg.com/tippy.js@6"></script>
         <script src="{{url_for('static', path='/js/sweetalert2.all.min.js')}}"></script>
         <script src="{{url_for('static', path='/js/main.js')}}"></script>
+        <script src="https://code.jquery.com/jquery-3.6.4.min.js" integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
+
     {% endblock %}
+    {% if session_id in session %}
+        {% if session[session_id]['first_login'] == 1 %}
+            <script>
+                Swal.fire({
+                    title: 'API Key',
+                    text: 'Note it carefully, one-time only: ' + '{{ session[session_id]['api_key'] }}',
+                    icon: 'info',
+                    confirmButtonText: 'Ok'
+                }).then(() => {
+                    $.ajax({
+                      type: "POST",
+                      url: '/remove_first_login'
+                    });
+                });
+
+            </script>
+        {% endif %}
+    {% endif %}
 </body>
 </html>

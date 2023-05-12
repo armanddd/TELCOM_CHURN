@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
   tippy('#dependantsInformation', {
         content: "Are there individuals who rely on the primary account holder for their services.",
     });
+
  /*tippy('#servicesInformation', {
         content: "Is there any another additional monthly paid service that the customer has subscribed to",
     });*/
@@ -32,3 +33,15 @@ document.addEventListener("DOMContentLoaded", function(event) {
         }).then(() => {window.location = "/"})
     }
 });
+
+function checkfile(sender) {
+    let validExts = new Array(".xlsx", ".xls", ".csv");
+    let fileExt = sender.value;
+    fileExt = fileExt.substring(fileExt.lastIndexOf('.'));
+    if (validExts.indexOf(fileExt) < 0) {
+      alert("Invalid file selected, valid files are of " +
+               validExts.toString() + " types.");
+      return false;
+    }
+    else return true;
+}

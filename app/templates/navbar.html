@@ -12,6 +12,9 @@
         <ul class="navbar-nav ms-auto d-flex justify-content-end"> <!-- Add ms-auto and justify-content-end classes here -->
         {% if session_id in session %}
             <li class="nav-item">
+                <a class="nav-link" href="/history">History</a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" href="/logout">Logout</a>
             </li>
         {% else %}

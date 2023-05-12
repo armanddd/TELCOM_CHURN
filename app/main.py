@@ -66,6 +66,9 @@ templates = Jinja2Templates(directory="templates")
 async def read_home(request: Request):
     return templates.TemplateResponse("base.html", {"request": request, "session": session, "session_id": session_id})
 
+@app.get("/history", response_class=HTMLResponse)
+async def read_home(request: Request):
+    return templates.TemplateResponse("history.html", {"request": request, "session": session, "session_id": session_id})
 
 @app.get("/login", response_class=HTMLResponse)
 async def login(request: Request):
@@ -107,7 +110,7 @@ async def register_user(username: str = Form(...), email: str = Form(...), passw
         "api_key": secrets.token_hex(16)
     }
     await database.execute(query=query, values=values)
-    response = RedirectResponse(url="/", status_code=303)
+    
     return RedirectResponse(url="/", status_code=303)
 
 

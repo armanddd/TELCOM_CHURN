@@ -1,7 +1,7 @@
 <!-- form.html -->
 {% if session_id in session %}
 
-<form style="width: 50%;margin-left:25%" class="mt-5" method="post" action="/make_prediction">
+<form style="width: 50%;margin-left:25%" class="mt-5" method="post" enctype="multipart/form-data" action="/make_prediction">
     <h1 class="display-4 text-center mb-4">Customer Telecom Churn Prediction</h1>
     <div class="mb-3">
         <label for="tenureForm" class="form-label">Tenure (in months) </label>
@@ -196,7 +196,7 @@
 
     <button type="submit" class="btn btn-primary">Submit</button>
     <br><strong style="font-size:50px">OR</strong>
-    <input style="display: inline;" type="file" id="fileInput" name="fileInput" onchange="checkfile(this)">
+    <input style="display: inline;" type="file" id="templateFile" name="templateFile" onchange="checkfile(this)">
     <p style="display:inline;position:absolute;font-size: 1.2em;transform: translateX(-20em);"><a id="dlLink" href="/static/files/Churn Prediction Template.xlsx">Download the template</a></p>
 
 </form>

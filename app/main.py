@@ -1,17 +1,24 @@
 import uuid
-from fastapi import FastAPI, Request, HTTPException, status, Form
+from io import BytesIO
+
+from fastapi import FastAPI, Request, HTTPException, status, Form, UploadFile, File
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
 from databases import Database
 from argon2 import PasswordHasher, exceptions
+from io import BytesIO
+import pandas as pd
 import secrets
+
+from starlette.responses import JSONResponse
 
 app = FastAPI()
 database = Database("sqlite:///./test.db")
 session = {}
 session_id = None
 ph = PasswordHasher()
+fileDf = pd.DataFrame()
 
 
 @app.on_event("startup")
@@ -66,16 +73,22 @@ templates = Jinja2Templates(directory="templates")
 async def read_home(request: Request):
     return templates.TemplateResponse("base.html", {"request": request, "session": session, "session_id": session_id})
 
+
 @app.get("/history", response_class=HTMLResponse)
 async def read_home(request: Request):
-    return templates.TemplateResponse("history.html", {"request": request, "session": session, "session_id": session_id})
+    if session_id not in session:
+        return RedirectResponse(url="/", status_code=302)
+    else:
+        return templates.TemplateResponse("history.html",
+                                          {"request": request, "session": session, "session_id": session_id})
+
 
 @app.get("/login", response_class=HTMLResponse)
 async def login(request: Request):
     if session_id not in session:
         return templates.TemplateResponse("login.html", {"request": request})
     else:
-        return RedirectResponse(url="/", status_code=303)
+        return RedirectResponse(url="/", status_code=302)
 
 
 @app.get("/logout")
@@ -110,7 +123,7 @@ async def register_user(username: str = Form(...), email: str = Form(...), passw
         "api_key": secrets.token_hex(16)
     }
     await database.execute(query=query, values=values)
-    
+
     return RedirectResponse(url="/", status_code=303)
 
 
@@ -134,9 +147,11 @@ async def login_user(email: str = Form(...), password: str = Form(...)):
         except exceptions.VerifyMismatchError:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     session_id = str(uuid.uuid4())
-    session[session_id] = {'username': row[1], 'email': row[3], 'logged_in': True, 'first_login': row[4], 'api_key': row[5]}
+    session[session_id] = {'username': row[1], 'email': row[3], 'logged_in': True, 'first_login': row[4],
+                           'api_key': row[5]}
 
     return RedirectResponse(url="/", status_code=303)
+
 
 @app.post('/remove_first_login')
 async def remove_first_login():
@@ -146,134 +161,204 @@ async def remove_first_login():
     await database.execute(query, values)
     session[session_id]['first_login'] = 0
 
+
 @app.post('/make_prediction')
-async def make_prediction(tenureForm: float = Form(...), genderSelect: str = Form(...),
-                          seniorCitizenSelect: float = Form(...),
-                          partnerSelect: str = Form(...), dependentsSelect: str = Form(...),
-                          phoneServiceSelect: str = Form(...), multipleLinesSelect: str = Form(...),
-                          internetServiceSelect: str = Form(...), onlineSecuritySelect: str = Form(...),
-                          onlineBackupSelect: str = Form(...), deviceProtectionSelect: str = Form(...),
-                          techSupportSelect: str = Form(...), streamingTVSelect: str = Form(...),
-                          streamingMoviesSelect: str = Form(...),
-                          contractTypeSelect: str = Form(...), paymentMethodSelect: str = Form(...),
-                          paperlessBillingSelect: str = Form(...),
-                          monthlyChargesForm: float = Form(...), totalChargesForm: float = Form(...)):
+async def make_prediction(tenureForm: float = Form(None), genderSelect: str = Form(None),
+                          seniorCitizenSelect: float = Form(None),
+                          partnerSelect: str = Form(None), dependentsSelect: str = Form(None),
+                          phoneServiceSelect: str = Form(None), multipleLinesSelect: str = Form(None),
+                          internetServiceSelect: str = Form(None), onlineSecuritySelect: str = Form(None),
+                          onlineBackupSelect: str = Form(None), deviceProtectionSelect: str = Form(None),
+                          techSupportSelect: str = Form(None), streamingTVSelect: str = Form(None),
+                          streamingMoviesSelect: str = Form(None),
+                          contractTypeSelect: str = Form(None), paymentMethodSelect: str = Form(None),
+                          paperlessBillingSelect: str = Form(None),
+                          monthlyChargesForm: float = Form(None), totalChargesForm: float = Form(None),
+                          api_key: str = Form(None), templateFile: UploadFile = File(None)):
     import joblib
-    import pandas as pd
-    global session_id
+    global session_id, fileDf
 
-    #if session_id is None:
-    #    return RedirectResponse(url="/", status_code=401)
+    # if user not logged in then check for api key
+    if session_id not in session:
+        query = """
+                    SELECT id, username, password, email, first_login
+                    FROM users
+                    WHERE api_key = :api_key
+                """
+        values = {
+            "api_key": api_key
+        }
+        row = await database.fetch_one(query=query, values=values)
+        if row is None:
+            return RedirectResponse(url="/", status_code=401)
 
-    #if pyjwt.decode(encoded_jwt, "secret", algorithms=["HS256"])["session_id"] != session_id:
-    #    return RedirectResponse(url="/", status_code=401)
+    rf_model = joblib.load("static/models/rf_best.joblib")
+    scaler = joblib.load("static/models/min_max_scaler.joblib")
 
-    services_pca = joblib.load("static/models/services_pca.joblib")
-    voting_clf = joblib.load("static/models/pca_voting_classifier.joblib")
-    scaler = joblib.load("static/models/scaler.joblib")
+    # store for later use
+    # file_df = pd.read_excel(BytesIO(await templateFile.read()), engine='openpyxl')
 
-    ############################# PCA Part #############################
-    pca_data = {"PhoneService": phoneServiceSelect, "MultipleLines": multipleLinesSelect,
-                "InternetService": internetServiceSelect, "OnlineSecurity": onlineSecuritySelect,
-                "OnlineBackup": onlineBackupSelect, "DeviceProtection": deviceProtectionSelect,
-                "TechSupport": techSupportSelect, "StreamingTV": streamingTVSelect,
-                "StreamingMovies": streamingMoviesSelect}
+    data_df = await transformDfForPrediction(locals())
 
-    pca_df = pd.DataFrame(data=pca_data, columns=['PhoneService', 'MultipleLines', 'InternetService', 'OnlineSecurity',
-                                                  'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV',
-                                                  'StreamingMovies'], index=["1"])
-    pca_df = pd.get_dummies(pca_df)
+    ############################# SCALER TRANSFORMATION #############################
+    # select independent variables
+    features = data_df.columns.values
+    data_df = pd.DataFrame(scaler.transform(data_df))
+    data_df.columns = features
+    ############################# SCALER TRANSFORMATION #############################
 
-    pca_example = pd.DataFrame(columns=['PhoneService_No', 'PhoneService_Yes', 'MultipleLines_No',
-                                        'MultipleLines_No phone service', 'MultipleLines_Yes',
-                                        'InternetService_DSL', 'InternetService_Fiber optic',
-                                        'InternetService_No', 'OnlineSecurity_No',
-                                        'OnlineSecurity_No internet service', 'OnlineSecurity_Yes',
-                                        'OnlineBackup_No', 'OnlineBackup_No internet service',
-                                        'OnlineBackup_Yes', 'DeviceProtection_No',
-                                        'DeviceProtection_No internet service', 'DeviceProtection_Yes',
-                                        'TechSupport_No', 'TechSupport_No internet service', 'TechSupport_Yes',
-                                        'StreamingTV_No', 'StreamingTV_No internet service', 'StreamingTV_Yes',
-                                        'StreamingMovies_No', 'StreamingMovies_No internet service',
-                                        'StreamingMovies_Yes'])
-
-    # set a row with only values of 0
-    pca_example.loc[1] = 0
-
-    # merge the two dfs so we have a replica of the training df with all the possible values
-    pca_df = pd.merge(pca_example, pca_df, how="right").fillna(0)
-
-    # store value of the services pca for later concat
-    X_pca = pd.DataFrame(services_pca.transform(pca_df), columns=['PC1'])
-    ############################# PCA Part #############################
-
-    ############################# Voting Part #############################
-    voting_data = {'gender': genderSelect, 'SeniorCitizen': seniorCitizenSelect, 'Partner': partnerSelect,
-                   'Dependents': dependentsSelect, 'tenure': tenureForm,
-                   'Contract': contractTypeSelect, 'PaperlessBilling': paperlessBillingSelect,
-                   'PaymentMethod': paymentMethodSelect, 'MonthlyCharges': monthlyChargesForm,
-                   'TotalCharges': totalChargesForm}
-
-    voting_df = pd.DataFrame(data=voting_data, columns=['gender', 'SeniorCitizen', 'Partner', 'Dependents', 'tenure',
-                                                        'Contract', 'PaperlessBilling', 'PaymentMethod',
-                                                        'MonthlyCharges',
-                                                        'TotalCharges'], index=["1"])
-
-    # change cast types so get dummies doesnt create additional columns
-    voting_df = voting_df.astype(
-        {'SeniorCitizen': 'float', 'tenure': 'float', 'MonthlyCharges': 'float', 'TotalCharges': 'float'})
-    voting_df = pd.get_dummies(voting_df)
-
-    voting_example = pd.DataFrame(columns=['SeniorCitizen', 'tenure', 'MonthlyCharges', 'TotalCharges',
-                                           'gender_Female', 'gender_Male', 'Partner_No', 'Partner_Yes',
-                                           'Dependents_No', 'Dependents_Yes', 'Contract_Month-to-month',
-                                           'Contract_One year', 'Contract_Two year', 'PaperlessBilling_No',
-                                           'PaperlessBilling_Yes', 'PaymentMethod_Bank transfer (automatic)',
-                                           'PaymentMethod_Credit card (automatic)',
-                                           'PaymentMethod_Electronic check', 'PaymentMethod_Mailed check'])
-    # change cast types so get dummies doesnt create additional columns
-    voting_example = voting_example.astype(
-        {'SeniorCitizen': 'int', 'tenure': 'int', 'MonthlyCharges': 'float', 'TotalCharges': 'float'})
-    # set a row with only values of 0
-    voting_example.loc[1] = 0
-
-    # merge the two dfs so we have a replica of the training df with all the possible values
-    voting_df = pd.merge(voting_example, voting_df, how="right").fillna(0)
-
-    voting_df = pd.DataFrame(scaler.transform(voting_df), columns=voting_df.columns.values)
-    voting_df["PC1"] = X_pca[["PC1"]]
-
-    ############################# Voting Part #############################
+    # define api values
+    try:
+        username = session[session_id]["username"]
+    except KeyError:
+        username = row[1]
 
     ############################# Database Part ###########################
-    query = """
-                INSERT INTO predictions ("requested_user", "requested_time", "gender", "SeniorCitizen", "Partner", "Dependents", "tenure", "PhoneService", "MultipleLines", "InternetService", "OnlineSecurity", "OnlineBackup", "DeviceProtection", "TechSupport", "StreamingTV", "StreamingMovies", "Contract", "PaperlessBilling", "PaymentMethod", "MonthlyCharges", "TotalCharges", "predictions") 
-                VALUES (:username, DATE('now'), :gender, :senior_citizen, :partner, :dependents, :tenure, :phone_service, :multiple_lines, :internet_service, :online_security, :online_backup, :device_protection, :tech_support, :streaming_tv, :streaming_movies, :contract, :paperless_billing, :payment_method, :monthly_charges, :total_charges, :prediction)
-            """
-    values = {
-        "username": session[session_id]["username"],
-        "gender": genderSelect,
-        "senior_citizen": seniorCitizenSelect,
-        "partner": partnerSelect,
-        "dependents": dependentsSelect,
-        "tenure": tenureForm,
-        "phone_service": phoneServiceSelect,
-        "multiple_lines": multipleLinesSelect,
-        "internet_service": internetServiceSelect,
-        "online_security": onlineSecuritySelect,
-        "online_backup": onlineBackupSelect,
-        "device_protection": deviceProtectionSelect,
-        "tech_support": techSupportSelect,
-        "streaming_tv": streamingTVSelect,
-        "streaming_movies": streamingMoviesSelect,
-        "contract": contractTypeSelect,
-        "paperless_billing": paperlessBillingSelect,
-        "payment_method": paymentMethodSelect,
-        "monthly_charges": monthlyChargesForm,
-        "total_charges": totalChargesForm,
-        "prediction": str(voting_clf.predict(voting_df)[0])
-    }
-    await database.execute(query, values)
-    ############################# Database Part ###########################
+    query = """INSERT INTO predictions ("requested_user", "requested_time", "gender", "SeniorCitizen", "Partner", 
+    "Dependents", "tenure", "PhoneService", "MultipleLines", "InternetService", "OnlineSecurity", "OnlineBackup", 
+    "DeviceProtection", "TechSupport", "StreamingTV", "StreamingMovies", "Contract", "PaperlessBilling", 
+    "PaymentMethod", "MonthlyCharges", "TotalCharges", "predictions") VALUES (:username, DATE('now'), :gender, 
+    :senior_citizen, :partner, :dependents, :tenure, :phone_service, :multiple_lines, :internet_service, 
+    :online_security, :online_backup, :device_protection, :tech_support, :streaming_tv, :streaming_movies, :contract, 
+    :paperless_billing, :payment_method, :monthly_charges, :total_charges, :prediction)"""
 
-    return RedirectResponse(url="/?prediction=" + str(voting_clf.predict(voting_df)[0]), status_code=303)
+    if templateFile:
+        import glob
+        data_df['Churn'] = rf_model.predict(data_df)
+        path = f"static/files/{username}_{len(glob.glob(f'static/files/{username}*'))}_ChurnPrediction.xlsx"
+        data_df.to_excel(path)
+
+        for index, row in fileDf.iterrows():
+            values = {
+                "username": username,
+                "gender": row["gender"],
+                "senior_citizen": row["SeniorCitizen"],
+                "partner": row["Partner"],
+                "dependents": row["Dependents"],
+                "tenure": row["tenure"],
+                "phone_service": row["PhoneService"],
+                "multiple_lines": row["MultipleLines"],
+                "internet_service": row["InternetService"],
+                "online_security": row["OnlineSecurity"],
+                "online_backup": row["OnlineBackup"],
+                "device_protection": row["DeviceProtection"],
+                "tech_support": row["TechSupport"],
+                "streaming_tv": row["StreamingTV"],
+                "streaming_movies": row["StreamingMovies"],
+                "contract": row["Contract"],
+                "paperless_billing": row["PaperlessBilling"],
+                "payment_method": row["PaymentMethod"],
+                "monthly_charges": row["MonthlyCharges"],
+                "total_charges": row["TotalCharges"],
+                "prediction": str(data_df['Churn'].iloc[index])
+            }
+            await database.execute(query, values)
+    else:
+        values = {
+            "username": username,
+            "gender": genderSelect,
+            "senior_citizen": seniorCitizenSelect,
+            "partner": partnerSelect,
+            "dependents": dependentsSelect,
+            "tenure": tenureForm,
+            "phone_service": phoneServiceSelect,
+            "multiple_lines": multipleLinesSelect,
+            "internet_service": internetServiceSelect,
+            "online_security": onlineSecuritySelect,
+            "online_backup": onlineBackupSelect,
+            "device_protection": deviceProtectionSelect,
+            "tech_support": techSupportSelect,
+            "streaming_tv": streamingTVSelect,
+            "streaming_movies": streamingMoviesSelect,
+            "contract": contractTypeSelect,
+            "paperless_billing": paperlessBillingSelect,
+            "payment_method": paymentMethodSelect,
+            "monthly_charges": monthlyChargesForm,
+            "total_charges": totalChargesForm,
+            "prediction": str(rf_model.predict(data_df)[0])
+        }
+        await database.execute(query, values)
+
+    ############################# Database Part ###########################
+    if api_key:
+        if templateFile:
+            return JSONResponse(f"Your template with the predictions can be found at {path}")
+        else:
+            return JSONResponse(content={"churn_prediction": str(rf_model.predict(data_df)[0])})
+    else:
+        return RedirectResponse(url="/?prediction=" + str(rf_model.predict(data_df)[0]), status_code=303)
+
+
+async def transformDfForPrediction(args):
+    global fileDf
+
+    df = pd.DataFrame(columns=['SeniorCitizen', 'tenure', 'MonthlyCharges', 'TotalCharges',
+                               'MultipleLines_No', 'MultipleLines_No phone service',
+                               'MultipleLines_Yes', 'InternetService_DSL',
+                               'InternetService_Fiber optic', 'InternetService_No',
+                               'OnlineSecurity_No', 'OnlineSecurity_No internet service',
+                               'OnlineSecurity_Yes', 'OnlineBackup_No',
+                               'OnlineBackup_No internet service', 'OnlineBackup_Yes',
+                               'DeviceProtection_No', 'DeviceProtection_No internet service',
+                               'DeviceProtection_Yes', 'TechSupport_No',
+                               'TechSupport_No internet service', 'TechSupport_Yes', 'StreamingTV_No',
+                               'StreamingTV_No internet service', 'StreamingTV_Yes',
+                               'StreamingMovies_No', 'StreamingMovies_No internet service',
+                               'StreamingMovies_Yes', 'Contract_Month-to-month', 'Contract_One year',
+                               'Contract_Two year', 'PaymentMethod_Bank transfer (automatic)',
+                               'PaymentMethod_Credit card (automatic)',
+                               'PaymentMethod_Electronic check', 'PaymentMethod_Mailed check',
+                               'gender_Female', 'gender_Male', 'Partner_No', 'Partner_Yes',
+                               'Dependents_No', 'Dependents_Yes', 'PaperlessBilling_No',
+                               'PaperlessBilling_Yes', 'PhoneService_No', 'PhoneService_Yes'])
+
+    df = df.astype(
+        {'SeniorCitizen': 'int', 'tenure': 'float', 'MonthlyCharges': 'float', 'TotalCharges': 'float'})
+
+    # transform if we use form API
+    if args['templateFile'] is None:
+        data = {'gender': args['genderSelect'], 'SeniorCitizen': args['seniorCitizenSelect'],
+                'Partner': args['partnerSelect'],
+                'Dependents': args['dependentsSelect'], 'tenure': args['tenureForm'],
+                'Contract': args['contractTypeSelect'], 'PaperlessBilling': args['paperlessBillingSelect'],
+                'PaymentMethod': args['paymentMethodSelect'], 'MonthlyCharges': args['monthlyChargesForm'],
+                'TotalCharges': args['totalChargesForm']}
+        data_df = pd.DataFrame(data=data, columns=['gender', 'SeniorCitizen', 'Partner', 'Dependents', 'tenure',
+                                                   'Contract', 'PaperlessBilling', 'PaymentMethod',
+                                                   'MonthlyCharges',
+                                                   'TotalCharges'], index=["1"])
+        data_df = data_df.astype(
+            {'SeniorCitizen': 'float', 'tenure': 'float', 'MonthlyCharges': 'float', 'TotalCharges': 'float'})
+    # transform if we use FILE with API
+    else:
+        templateFileExtension = args['templateFile'].filename.split(".")[-1]
+
+        if templateFileExtension != "xlsx" and templateFileExtension != "csv" and templateFileExtension != "xls":
+            return JSONResponse("Your file needs to be of the type xlsx, csv or xls.")
+
+        data_df = pd.read_excel(BytesIO(await args['templateFile'].read()), engine='openpyxl')
+        fileDf = data_df
+
+    data_df = pd.get_dummies(data_df)
+    data_df = pd.merge(df, data_df, how="right").fillna(0)
+
+    return data_df[['SeniorCitizen', 'tenure', 'MonthlyCharges', 'TotalCharges',
+                    'MultipleLines_No', 'MultipleLines_No phone service',
+                    'MultipleLines_Yes', 'InternetService_DSL',
+                    'InternetService_Fiber optic', 'InternetService_No',
+                    'OnlineSecurity_No', 'OnlineSecurity_No internet service',
+                    'OnlineSecurity_Yes', 'OnlineBackup_No',
+                    'OnlineBackup_No internet service', 'OnlineBackup_Yes',
+                    'DeviceProtection_No', 'DeviceProtection_No internet service',
+                    'DeviceProtection_Yes', 'TechSupport_No',
+                    'TechSupport_No internet service', 'TechSupport_Yes',
+                    'StreamingTV_No', 'StreamingTV_No internet service',
+                    'StreamingTV_Yes', 'StreamingMovies_No',
+                    'StreamingMovies_No internet service', 'StreamingMovies_Yes',
+                    'Contract_Month-to-month', 'Contract_One year',
+                    'Contract_Two year', 'PaymentMethod_Bank transfer (automatic)',
+                    'PaymentMethod_Credit card (automatic)',
+                    'PaymentMethod_Electronic check', 'PaymentMethod_Mailed check',
+                    'gender_Female', 'gender_Male', 'Partner_No', 'Partner_Yes',
+                    'Dependents_No', 'Dependents_Yes', 'PaperlessBilling_No',
+                    'PaperlessBilling_Yes', 'PhoneService_No', 'PhoneService_Yes']]

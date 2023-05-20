@@ -41,6 +41,7 @@ function checkfile(sender) {
     if (validExts.indexOf(fileExt) < 0) {
       alert("Invalid file selected, valid files are of " +
                validExts.toString() + " types.");
+      document.getElementById('fileInput').value = ""
       return false;
     }
     else return true;

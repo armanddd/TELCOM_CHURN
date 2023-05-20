@@ -146,3 +146,11 @@ input[type="submit"]:hover {
   padding: 10px 0;
   border-radius: 0 0 4px 4px;
 }
+
+#dlLink {
+   color: #0d6efd;
+}
+
+#dlLink:hover {
+   color: #5a5a5a;
+}

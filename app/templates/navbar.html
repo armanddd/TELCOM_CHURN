@@ -1,9 +1,9 @@
 <!-- navbar.html -->
 <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #4d5154">
     {% if session_id in session %}
-        <a class="navbar-brand ms-2" href="#">Welcome, {{session[session_id]["username"]}}!</a>
+        <a class="navbar-brand ms-2" href="/">Welcome, {{session[session_id]["username"]}}!</a>
     {% else %}
-        <a class="navbar-brand ms-2" href="#">Welcome, guest!</a>
+        <a class="navbar-brand ms-2" href="/">Welcome, guest!</a>
     {% endif %}
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>

@@ -1,6 +1,7 @@
 # TELCOM_CHURN
 
 Api Prediction:
+Single prediction
 ```
 tenureForm=5
 genderSelect=Male
@@ -22,4 +23,9 @@ paperlessBillingSelect=Yes
 monthlyChargesForm=25
 totalChargesForm=125
 api_key=xxxxxxxxxxx
+```
+
+Multiple prediction using the template:
+```
+curl -X POST -F "templateFile=@test.xlsx" -F "api_key=xxxxxxxxxxx" http://localhost:8000/make_prediction
 ```

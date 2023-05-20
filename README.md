@@ -21,5 +21,5 @@ paymentMethodSelect=Credit card (automatic)
 paperlessBillingSelect=Yes
 monthlyChargesForm=25
 totalChargesForm=125
-api_key=aea68b2ed97163cd24fa146609fbcd31
+api_key=xxxxxxxxxxx
 ```

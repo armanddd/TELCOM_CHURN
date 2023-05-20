@@ -13,27 +13,19 @@
           </tr>
         </thead>
         <tbody>
+          {% for row in history_rows %}
+            <tr>
+              <td>{{ row[2] }}</td>
+              <td>{{ row[3] }}</td>
+              <td>{{ row[4] }}</td>
+              {% if row[5] is none %}
+                  <td><a href={{ row[6] }}><img src="/static/images/download-svgrepo-com.svg" alt="Download icon" width="20"></a></td>
+              {% else %}
+                  <td>{{ row[5] }}</td>
+              {% endif %}
 
-          <tr>
-            <td>May 1, 2023</td>
-            <td>Api</td>
-            <td>Single Prediction</td>
-            <td>1</td>
-          </tr>
-
-          <tr>
-            <td>May 4, 2023</td>
-            <td>Website</td>
-            <td>Template Prediction</td>
-            <td><img src="/static/images/download-svgrepo-com.svg" alt="Download icon" width="20"></td>
-          </tr>
-
-          <tr>
-            <td>May 7, 2023</td>
-            <td>Api</td>
-            <td>Single prediction</td>
-            <td>0</td>
-          </tr>
+            </tr>
+          {% endfor %}
 
         </tbody>
       </table>

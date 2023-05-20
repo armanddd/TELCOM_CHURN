@@ -60,6 +60,17 @@ async def create_tables():
                 predictions TEXT NOT NULL
             )
         """)
+    await database.execute("""
+                CREATE TABLE IF NOT EXISTS requests (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    requested_user TEXT NOT NULL,
+                    requested_time DATETIME NOT NULL,
+                    requested_origin TEXT NOT NULL,
+                    requested_details TEXT NOT NULL,
+                    requested_prediction TEXT NULL,
+                    requested_prediction_file_path TEXT NULL
+                )
+            """)
 
 
 # Mount static files directory for CSS, JS, and images
@@ -76,11 +87,20 @@ async def read_home(request: Request):
 
 @app.get("/history", response_class=HTMLResponse)
 async def read_home(request: Request):
+    global session, session_id
+    query = """
+                SELECT *
+                FROM requests
+                WHERE requested_user = :requested_user
+            """
+    values = {
+        "requested_user": session[session_id]['username']
+    }
+    rows = await database.fetch_all(query=query, values=values)
     if session_id not in session:
         return RedirectResponse(url="/", status_code=302)
     else:
-        return templates.TemplateResponse("history.html",
-                                          {"request": request, "session": session, "session_id": session_id})
+        return templates.TemplateResponse("history.html", {"request": request, "session": session, "session_id": session_id, "history_rows": rows})
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -214,7 +234,7 @@ async def make_prediction(tenureForm: float = Form(None), genderSelect: str = Fo
         username = row[1]
 
     ############################# Database Part ###########################
-    query = """INSERT INTO predictions ("requested_user", "requested_time", "gender", "SeniorCitizen", "Partner", 
+    predictions_query = """INSERT INTO predictions ("requested_user", "requested_time", "gender", "SeniorCitizen", "Partner", 
     "Dependents", "tenure", "PhoneService", "MultipleLines", "InternetService", "OnlineSecurity", "OnlineBackup", 
     "DeviceProtection", "TechSupport", "StreamingTV", "StreamingMovies", "Contract", "PaperlessBilling", 
     "PaymentMethod", "MonthlyCharges", "TotalCharges", "predictions") VALUES (:username, DATE('now'), :gender, 
@@ -222,14 +242,20 @@ async def make_prediction(tenureForm: float = Form(None), genderSelect: str = Fo
     :online_security, :online_backup, :device_protection, :tech_support, :streaming_tv, :streaming_movies, :contract, 
     :paperless_billing, :payment_method, :monthly_charges, :total_charges, :prediction)"""
 
-    if templateFile:
+    requests_query = """INSERT INTO requests ("requested_user", "requested_time", "requested_origin", 
+    "requested_details", "requested_prediction", "requested_prediction_file_path") VALUES (:requested_user, 
+    DATE('now'), :requested_origin, :requested_details, :requested_prediction, :requested_prediction_file_path)
+    """
+
+    if templateFile is not None and templateFile.filename:
         import glob
+        fileDf['Churn'] = rf_model.predict(data_df)
         data_df['Churn'] = rf_model.predict(data_df)
         path = f"static/files/{username}_{len(glob.glob(f'static/files/{username}*'))}_ChurnPrediction.xlsx"
-        data_df.to_excel(path)
+        fileDf.to_excel(path)
 
         for index, row in fileDf.iterrows():
-            values = {
+            predictions_values = {
                 "username": username,
                 "gender": row["gender"],
                 "senior_citizen": row["SeniorCitizen"],
@@ -252,9 +278,18 @@ async def make_prediction(tenureForm: float = Form(None), genderSelect: str = Fo
                 "total_charges": row["TotalCharges"],
                 "prediction": str(data_df['Churn'].iloc[index])
             }
-            await database.execute(query, values)
+
+        requests_values = {
+            "requested_user": username,
+            "requested_origin": "API" if api_key else "FORM",
+            "requested_details": "Template Prediction" if templateFile else "Single Prediction",
+            "requested_prediction": None,
+            "requested_prediction_file_path": path
+        }
+        await database.execute(predictions_query, predictions_values)
+        await database.execute(requests_query, requests_values)
     else:
-        values = {
+        predictions_values = {
             "username": username,
             "gender": genderSelect,
             "senior_citizen": seniorCitizenSelect,
@@ -277,7 +312,16 @@ async def make_prediction(tenureForm: float = Form(None), genderSelect: str = Fo
             "total_charges": totalChargesForm,
             "prediction": str(rf_model.predict(data_df)[0])
         }
-        await database.execute(query, values)
+
+        requests_values = {
+            "requested_user": username,
+            "requested_origin": "API" if api_key else "FORM",
+            "requested_details": "Template Prediction" if templateFile is not None and templateFile.filename else "Single Prediction",
+            "requested_prediction": str(rf_model.predict(data_df)[0]),
+            "requested_prediction_file_path": None
+        }
+        await database.execute(predictions_query, predictions_values)
+        await database.execute(requests_query, requests_values)
 
     ############################# Database Part ###########################
     if api_key:
@@ -286,7 +330,10 @@ async def make_prediction(tenureForm: float = Form(None), genderSelect: str = Fo
         else:
             return JSONResponse(content={"churn_prediction": str(rf_model.predict(data_df)[0])})
     else:
-        return RedirectResponse(url="/?prediction=" + str(rf_model.predict(data_df)[0]), status_code=303)
+        if templateFile.filename:
+            return JSONResponse(f"Your template with the predictions can be found at {path}")
+        else:
+            return RedirectResponse(url="/?prediction=" + str(rf_model.predict(data_df)[0]), status_code=303)
 
 
 async def transformDfForPrediction(args):
@@ -315,8 +362,8 @@ async def transformDfForPrediction(args):
     df = df.astype(
         {'SeniorCitizen': 'int', 'tenure': 'float', 'MonthlyCharges': 'float', 'TotalCharges': 'float'})
 
-    # transform if we use form API
-    if args['templateFile'] is None:
+    # transform if we use form data
+    if args['templateFile'] is None or not args['templateFile'].filename:
         data = {'gender': args['genderSelect'], 'SeniorCitizen': args['seniorCitizenSelect'],
                 'Partner': args['partnerSelect'],
                 'Dependents': args['dependentsSelect'], 'tenure': args['tenureForm'],
@@ -329,7 +376,7 @@ async def transformDfForPrediction(args):
                                                    'TotalCharges'], index=["1"])
         data_df = data_df.astype(
             {'SeniorCitizen': 'float', 'tenure': 'float', 'MonthlyCharges': 'float', 'TotalCharges': 'float'})
-    # transform if we use FILE with API
+    # transform if we use FILE data
     else:
         templateFileExtension = args['templateFile'].filename.split(".")[-1]
 

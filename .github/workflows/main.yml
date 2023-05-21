@@ -21,7 +21,7 @@ jobs:
         run: pip install -r app/requirements.txt
         
       - name: Start FastAPI server
-        run: uvicorn main:app
+        run: start /b cmd /c "uvicorn main:app"
         working-directory: app
         
       - name: Wait for server to start

@@ -17,16 +17,16 @@ jobs:
         with:
           python-version: 3.10.11
       
-      - name: Display folder tree
-        run: Get-ChildItem -Recurse
+      - name: Cd to app
+        run: cd app
         
       - name: Install dependencies
-        run: pip install -r app/requirements.txt
+        run: pip install -r requirements.txt
         
       - name: Start FastAPI server
         run: pythonw app/main.py
         
       - name: Run Python tests
-        run: python -m unittest -v app/tests/tests.py
+        run: python -m unittest -v tests/tests.py
         env:
           API_KEY: ${{ secrets.API_KEY }}

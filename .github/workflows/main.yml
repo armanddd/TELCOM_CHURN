@@ -23,16 +23,7 @@ jobs:
       - name: Start FastAPI server
         working-directory: app
         run: |
-          $info = New-Object System.Diagnostics.ProcessStartInfo
-          $info.FileName = "cmd"
-          $info.Arguments = "/c uvicorn main:app"
-          $info.CreateNoWindow = $true
-          $info.RedirectStandardOutput = $true
-          $info.UseShellExecute = $false
-          $process = New-Object System.Diagnostics.Process
-          $process.StartInfo = $info
-          $process.Start() | Out-Null
-          $process.WaitForExit()
+          Start-Process -NoNewWindow -FilePath python -ArgumentList "-m", "uvicorn", "main:app"
         
       - name: Wait for server to start
         run: |

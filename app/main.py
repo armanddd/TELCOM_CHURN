@@ -11,6 +11,7 @@ from io import BytesIO
 import pandas as pd
 import secrets
 import uvicorn
+import os
 
 from starlette.responses import JSONResponse
 
@@ -75,7 +76,8 @@ async def create_tables():
 
 
 # Mount static files directory for CSS, JS, and images
-app.mount("/static", StaticFiles(directory="static"), name="static")
+static_dir = os.path.join(os.getcwd(), "static")
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # Set up Jinja2Templates for rendering templates
 templates = Jinja2Templates(directory="templates")

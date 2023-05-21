@@ -20,11 +20,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r app/requirements.txt
         
+      - name: Change working directory
+        run: cd app
+        
       - name: Start FastAPI server
-        run: pythonw app/main.py
+        run: pythonw main.py
         
       - name: Change working directory
-        run: cd app/tests
+        run: cd tests
         
       - name: Run Python tests
         run: python -m unittest -v tests.py

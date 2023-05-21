@@ -1,4 +1,4 @@
-name: My Workflow
+name: Test Database and Predictions
 on:
   push:
     branches:

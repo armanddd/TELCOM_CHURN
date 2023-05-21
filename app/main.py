@@ -11,6 +11,7 @@ from io import BytesIO
 import pandas as pd
 import secrets
 import uvicorn
+import subprocess
 import os
 
 from starlette.responses import JSONResponse
@@ -418,4 +419,5 @@ async def transformDfForPrediction(args):
                     'PaperlessBilling_Yes', 'PhoneService_No', 'PhoneService_Yes']]
 
 if __name__ == "__main__":
-    uvicorn.run(app, background=True)
+    command = ["uvicorn", "main:app"]
+    subprocess.Popen(command)

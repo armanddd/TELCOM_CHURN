@@ -10,7 +10,6 @@ from argon2 import PasswordHasher, exceptions
 from io import BytesIO
 import pandas as pd
 import secrets
-import uvicorn
 import subprocess
 import os
 
@@ -417,6 +416,3 @@ async def transformDfForPrediction(args):
                     'gender_Female', 'gender_Male', 'Partner_No', 'Partner_Yes',
                     'Dependents_No', 'Dependents_Yes', 'PaperlessBilling_No',
                     'PaperlessBilling_Yes', 'PhoneService_No', 'PhoneService_Yes']]
-
-if __name__ == "__main__":
-    uvicorn.run(app)

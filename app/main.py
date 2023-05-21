@@ -73,10 +73,13 @@ async def create_tables():
                     requested_prediction_file_path TEXT NULL
                 )
             """)
+    
 
-
+# Get the directory path of the current script
+current_dir = os.path.dirname(os.path.abspath(__file__))
+# Construct the absolute path to the static files directory
+static_dir = os.path.join(current_dir, "static")
 # Mount static files directory for CSS, JS, and images
-static_dir = os.path.join(os.getcwd(), "static")
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # Set up Jinja2Templates for rendering templates

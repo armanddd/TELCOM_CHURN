@@ -17,7 +17,7 @@ import os
 from starlette.responses import JSONResponse
 
 app = FastAPI()
-database = Database("sqlite:///./app/test.db")
+database = Database("sqlite://./test.db")
 session = {}
 session_id = None
 ph = PasswordHasher()

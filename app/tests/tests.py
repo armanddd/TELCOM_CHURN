@@ -9,7 +9,7 @@ class TestDatabaseAndPredictions(unittest.TestCase):
         import os
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
-        root_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "test.db")
+        root_dir = "sqlite://" + os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "test.db")
         self.db = Database("sqlite://" + root_dir)
 
     def test_connect(self):

@@ -419,5 +419,4 @@ async def transformDfForPrediction(args):
                     'PaperlessBilling_Yes', 'PhoneService_No', 'PhoneService_Yes']]
 
 if __name__ == "__main__":
-    command = ["uvicorn", "main:app"]
-    subprocess.Popen(command)
+    uvicorn.run(app)

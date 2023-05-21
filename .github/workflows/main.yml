@@ -16,15 +16,13 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.10.11
-      
-      - name: Cd to app
-        run: cd app
         
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r app/requirements.txt
         
       - name: Start FastAPI server
-        run: pythonw app/main.py
+        run: pythonw main.py
+        working-directory: app
         
       - name: Run Python tests
         run: python -m unittest -v tests/tests.py

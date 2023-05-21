@@ -21,11 +21,11 @@ jobs:
         run: pip install -r app/requirements.txt
         
       - name: Start FastAPI server
-        run: python main.py
+        run: uvicorn main:app
         working-directory: app
         
       - name: Wait for server to start
-        run: sleep 10
+        run: sleep 7
         
       - name: Run Python tests
         run: python -m unittest -v app/tests/tests.py

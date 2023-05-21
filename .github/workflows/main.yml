@@ -22,7 +22,10 @@ jobs:
         
       - name: Start FastAPI server
         run: pythonw app/main.py
-
+        
+      - name: Debug PATH
+        run: echo $PATH
+        
       - name: Run Python tests
         run: python -m unittest -v app/tests/tests.py
         env:

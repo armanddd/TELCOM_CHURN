@@ -21,7 +21,7 @@ jobs:
         run: pip install -r app/requirements.txt
         
       - name: Start FastAPI server
-        run: python app/main.py
+        run: pythonw app/main.py
 
       - name: Run Python tests
         run: python -m unittest -v app/tests/tests.py

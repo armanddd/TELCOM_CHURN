@@ -197,7 +197,6 @@ async def make_prediction(tenureForm: float = Form(None), genderSelect: str = Fo
                           api_key: str = Form(None), templateFile: UploadFile = File(None)):
     import joblib
     global session_id, fileDf
-
     # if user not logged in then check for api key
     if session_id not in session:
         query = """
@@ -286,6 +285,7 @@ async def make_prediction(tenureForm: float = Form(None), genderSelect: str = Fo
             "requested_prediction": None,
             "requested_prediction_file_path": path
         }
+
         await database.execute(predictions_query, predictions_values)
         await database.execute(requests_query, requests_values)
     else:
@@ -320,6 +320,7 @@ async def make_prediction(tenureForm: float = Form(None), genderSelect: str = Fo
             "requested_prediction": str(rf_model.predict(data_df)[0]),
             "requested_prediction_file_path": None
         }
+
         await database.execute(predictions_query, predictions_values)
         await database.execute(requests_query, requests_values)
 

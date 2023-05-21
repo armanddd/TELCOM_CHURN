@@ -66,7 +66,7 @@ class TestDatabaseAndPredictions(unittest.TestCase):
             "paperlessBillingSelect": "Yes",
             "monthlyChargesForm": 25,
             "totalChargesForm": 125,
-            "api_key": "aea68b2ed97163cd24fa146609fbcd31"
+            "api_key": "e42eecda3c92c280fb0b1e49f12d71be"
         }
 
         response = requests.post("http://localhost:8000/make_prediction", data=form_data)
@@ -76,7 +76,7 @@ class TestDatabaseAndPredictions(unittest.TestCase):
         # test with file request
         with open("./../static/files/Churn Prediction Template.xlsx", "rb") as file:
             response = requests.post("http://localhost:8000/make_prediction", files={"templateFile": file},
-                                     data={"api_key": "aea68b2ed97163cd24fa146609fbcd31"})
+                                     data={"api_key": "e42eecda3c92c280fb0b1e49f12d71be"})
             self.assertEqual(response.status_code, 200)
             file_text = response.text
 

@@ -20,16 +20,10 @@ jobs:
       - name: Install dependencies
         run: pip install -r app/requirements.txt
         
-      - name: Change working directory
-        run: cd app
-        
       - name: Start FastAPI server
-        run: pythonw main.py
-        
-      - name: Change working directory
-        run: cd tests
+        run: pythonw app/main.py
         
       - name: Run Python tests
-        run: python -m unittest -v tests.py
+        run: python -m unittest -v app/tests/tests.py
         env:
           API_KEY: ${{ secrets.API_KEY }}

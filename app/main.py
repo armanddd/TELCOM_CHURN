@@ -418,4 +418,4 @@ async def transformDfForPrediction(args):
                     'PaperlessBilling_Yes', 'PhoneService_No', 'PhoneService_Yes']]
 
 if __name__ == "__main__":
-    uvicorn.run(app)
+    uvicorn.run(app, background=True)

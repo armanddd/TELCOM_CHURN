@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
@@ -15,12 +15,15 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.10.11  # Replace with the desired Python version
+          python-version: 3.10.11
 
       - name: Install dependencies
-        run: pip install -r app/requirements.txt  # Replace with your dependencies installation command
+        run: pip install -r app/requirements.txt
+        
+      - name: Start FastAPI server
+        run: uvicorn main:app
 
       - name: Run Python tests
-        run: python -m unittest -v app/tests/tests.py  # Replace with the path to your Python script
+        run: python -m unittest -v app/tests/tests.py
         env:
-          API_KEY: ${{ secrets.API_KEY }}  # Replace with your API key secret name
+          API_KEY: ${{ secrets.API_KEY }}

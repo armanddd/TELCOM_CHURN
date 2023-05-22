@@ -43,7 +43,11 @@ class TestDatabaseAndPredictions(unittest.TestCase):
             await self.db.disconnect()
 
         self.loop.run_until_complete(execute())
-
+    
+    def test_debug_url(self):
+        response = requests.get("http://localhost:8000")
+        response.raise_for_status()
+        
     def test_make_prediction(self):
         # test with form request
         form_data = {

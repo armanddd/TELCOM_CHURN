@@ -27,23 +27,5 @@ jobs:
           Start-Sleep -Seconds 3
           cd tests
           python -m unittest -v tests.py
-          
-  test:
-    needs: build
-    runs-on: windows-latest
-
-    steps:
-      - name: Wait for server to start
-        run: |
-          Start-Sleep -Seconds 5
-      
-      - name: Print directory tree
-        working-directory: app
-        run: |
-          tree
-
-      - name: Run tests
-        working-directory: app\tests
-        run: python -m unittest -v tests.py
         env:
           API_KEY: ${{ secrets.API_KEY }}

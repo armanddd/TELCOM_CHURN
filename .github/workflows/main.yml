@@ -36,7 +36,7 @@ jobs:
       
       - name: Print directory tree
         run: |
-          dir /s /b "${{ github.workspace }}"
+          Get-ChildItem -Recurse
 
       - name: Run tests
         working-directory: app\tests

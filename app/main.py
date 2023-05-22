@@ -10,14 +10,13 @@ from argon2 import PasswordHasher, exceptions
 from io import BytesIO
 import pandas as pd
 import secrets
-import uvicorn
 import subprocess
 import os
 
 from starlette.responses import JSONResponse
 
 app = FastAPI()
-database = Database("sqlite:///./test.db")
+database = Database("sqlite://./test.db")
 session = {}
 session_id = None
 ph = PasswordHasher()
@@ -417,6 +416,3 @@ async def transformDfForPrediction(args):
                     'gender_Female', 'gender_Male', 'Partner_No', 'Partner_Yes',
                     'Dependents_No', 'Dependents_Yes', 'PaperlessBilling_No',
                     'PaperlessBilling_Yes', 'PhoneService_No', 'PhoneService_Yes']]
-
-if __name__ == "__main__":
-    uvicorn.run(app)

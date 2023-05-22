@@ -2,11 +2,10 @@ import asyncio
 import unittest
 import requests
 from databases import Database
-
+import os
 
 class TestDatabaseAndPredictions(unittest.TestCase):
     def setUp(self):
-        import os
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
         root_dir = "sqlite://" + os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "test.db")
@@ -70,7 +69,7 @@ class TestDatabaseAndPredictions(unittest.TestCase):
             "paperlessBillingSelect": "Yes",
             "monthlyChargesForm": 25,
             "totalChargesForm": 125,
-            "api_key": "e42eecda3c92c280fb0b1e49f12d71be"
+            "api_key": os.environ.get('API_KEY')
         }
 
         response = requests.post("http://localhost:8000/make_prediction", data=form_data)
@@ -80,7 +79,7 @@ class TestDatabaseAndPredictions(unittest.TestCase):
         # test with file request
         with open("./../static/files/Churn Prediction Template.xlsx", "rb") as file:
             response = requests.post("http://localhost:8000/make_prediction", files={"templateFile": file},
-                                     data={"api_key": "e42eecda3c92c280fb0b1e49f12d71be"})
+                                     data={"api_key": os.environ.get('API_KEY')})
             self.assertEqual(response.status_code, 200)
             file_text = response.text
 

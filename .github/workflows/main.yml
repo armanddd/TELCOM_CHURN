@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r app/requirements.txt
         
-      - name: Start FastAPI server
+      - name: Start FastAPI Server And Execute Tests
         working-directory: app
         run: |
           Start-Process -NoNewWindow -FilePath python -ArgumentList "-m", "uvicorn", "main:app"

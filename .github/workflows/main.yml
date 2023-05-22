@@ -24,12 +24,17 @@ jobs:
         working-directory: app
         run: |
           Start-Process -NoNewWindow -FilePath python -ArgumentList "-m", "uvicorn", "main:app"
-        
+          
+  test:
+    needs: build
+    runs-on: windows-latest
+
+    steps:
       - name: Wait for server to start
         run: |
-          Start-Sleep -Seconds 10
-        
-      - name: Run Python tests
+          Start-Sleep -Seconds 5
+
+      - name: Run tests
         run: python -m unittest -v app/tests/tests.py
         env:
           API_KEY: ${{ secrets.API_KEY }}

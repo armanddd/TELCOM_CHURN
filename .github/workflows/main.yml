@@ -23,7 +23,10 @@ jobs:
       - name: Start FastAPI server
         working-directory: app
         run: |
-          cmd /C "uvicorn main:app && timeout /t 3 && cd tests && python -m unittest -v tests.py "
+          Start-Process -NoNewWindow -FilePath python -ArgumentList "-m", "uvicorn", "main:app"
+          Start-Sleep -Seconds 3
+          cd tests
+          python -m unittest -v tests.py
           
   test:
     needs: build

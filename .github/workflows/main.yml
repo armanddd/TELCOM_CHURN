@@ -36,7 +36,7 @@ jobs:
       
       - name: Print directory tree
         run: |
-          Get-ChildItem -Recurse
+          tree /F
 
       - name: Run tests
         working-directory: app\tests

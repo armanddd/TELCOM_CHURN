@@ -35,8 +35,9 @@ jobs:
           Start-Sleep -Seconds 5
       
       - name: Print directory tree
+        working-directory: app
         run: |
-          tree /F
+          tree
 
       - name: Run tests
         working-directory: app\tests
